@@ -6,6 +6,8 @@
 <title>Химия 11 — учебник с анимациями</title>
 <style>
 :root{--ink:#23201c;--muted:#5a554d;--glass:rgba(255,255,255,.86);--accent:#5b3fd0;--hl:rgba(91,63,208,.12);--bg:#cfd8d0}
+:root[data-book=phys]{--accent:#1f6fd1;--hl:rgba(31,111,209,.12);--bg:#d2dbe3}
+:root.dark[data-book=phys]{--accent:#7fb2ff;--bg:#1c232c}
 :root.dark{--ink:#f1ede6;--muted:#bdb7ad;--glass:rgba(28,30,36,.88);--accent:#b3a6ff;--hl:rgba(179,166,255,.16);--bg:#1f242b}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);font-family:system-ui,"Segoe UI",Roboto,sans-serif;color:var(--ink);-webkit-tap-highlight-color:transparent}
@@ -59,10 +61,24 @@ body.hide #top{transform:translateY(-70px);opacity:0}
 #close{position:absolute;right:12px;bottom:calc(74px + env(safe-area-inset-bottom));width:46px;height:46px;border-radius:23px;z-index:2;color:var(--ink)}
 #hint{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);padding:9px 14px;border-radius:12px;font-size:13px;z-index:6;transition:opacity .6s;white-space:nowrap}
 #hint.off{opacity:0;pointer-events:none}
+#bookb{width:auto!important;padding:0 8px;font-size:20px}
+.tabs{display:flex;gap:6px;margin:4px 8px 6px}
+.tabs button{flex:1;height:38px;border-radius:11px;background:var(--hl);color:var(--accent);font:600 14px system-ui;justify-content:center}
+.tabs button.on{background:var(--accent);color:#fff}
+#lib{position:fixed;inset:0;z-index:12;background:var(--bg);display:none;overflow:auto;padding:calc(24px + env(safe-area-inset-top)) 16px 24px}
+#lib.on{display:block}
+#lib h1{font:600 26px Georgia,serif;margin:6px 4px 4px}
+#lib p{margin:0 4px 18px;color:var(--muted);font-size:14px}
+#lib .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;max-width:720px}
+#lib button.book{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:10px;border-radius:16px;background:var(--glass);box-shadow:0 8px 24px rgba(0,0,0,.14)}
+#lib button.book img{width:100%;aspect-ratio:3/4;object-fit:cover;border-radius:8px;background:#fff}
+#lib button.book b{font:600 17px Georgia,serif}
+#lib button.book span{font-size:12.5px;color:var(--muted);line-height:1.3}
 </style>
 </head>
 <body>
 <header id="top" class="glass">
+  <button id="bookb" aria-label="Выбрать учебник">📚</button>
   <button id="tocb" aria-label="Оглавление"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></button>
   <div id="ttl">Химия · 11 класс</div>
   <div id="pg"></div>
@@ -73,7 +89,8 @@ body.hide #top{transform:translateY(-70px);opacity:0}
 <button class="nav" id="next" aria-label="Следующая страница"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
 <div id="hint" class="glass">Листайте свайпом ← →  ·  ▶ и подсвеченные слова — анимации</div>
 <div id="shade"></div>
-<section id="toc" class="sheet glass"><div class="grab"></div><h3>Оглавление</h3><div class="list"></div></section>
+<section id="toc" class="sheet glass"><div class="grab"></div><div class="tabs"></div><h3>Оглавление</h3><div class="list"></div></section>
+<section id="lib"><h1>Учебники с анимациями</h1><p>Выберите учебник. Страницы листаются свайпом, кнопки ▶ на полях открывают анимации.</p><div class="grid"></div></section>
 <section id="anims" class="sheet glass"><div class="grab"></div><h3></h3><div class="list"></div></section>
 <div id="player"><iframe title="Анимация"></iframe><button id="close" class="glass" aria-label="Закрыть анимацию"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -85,7 +102,21 @@ body.hide #top{transform:translateY(-70px);opacity:0}
   if (tg) { try { tg.ready(); tg.expand(); tg.disableVerticalSwipes && tg.disableVerticalSwipes(); if (tg.colorScheme === 'dark') document.documentElement.classList.add('dark'); } catch (e) {} }
   else if (matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
 
-  const B = await fetch('book.json').then(r => r.json());
+  // учебники: страницы и данные лежат в books/<id>/
+  const BOOKS = [{ id: 'chem', icon: '🧪', title: 'Химия', sub: '11 класс · О. С. Габриелян и др.', cover: 1 }, { id: 'phys', icon: '🧲', title: 'Физика', sub: '11 класс · Г. Я. Мякишев и др.', cover: 1 }];
+  const store = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
+  const qs = new URLSearchParams(location.search);
+  let BID = (qs.get('b') || '').replace(/[^a-z]/g, '');
+  const openBook = id => { store.set('lib.book', id); location.href = 'reader.html?b=' + id; };
+  const lib = $('#lib'), grid = lib.querySelector('.grid');
+  BOOKS.forEach(b => { const btn = document.createElement('button'); btn.className = 'book'; btn.innerHTML = `<img alt="" src="books/${b.id}/pages/${String(b.cover).padStart(3, '0')}.jpg"><b>${b.icon} ${b.title}</b><span>${b.sub}</span>`; btn.onclick = () => openBook(b.id); grid.appendChild(btn); });
+  $('#bookb').onclick = () => lib.classList.add('on');
+  if (!BOOKS.some(b => b.id === BID)) { const last = store.get('lib.book'); if (!BID && last && !qs.has('lib')) BID = last; }
+  if (!BOOKS.some(b => b.id === BID)) { lib.classList.add('on'); return; }
+  const BK = BOOKS.find(b => b.id === BID); document.documentElement.dataset.book = BID; $('#bookb').textContent = BK.icon; document.title = BK.title + ' 11 — учебник с анимациями';
+  store.set('lib.book', BID);
+  const tabs = $('#toc .tabs'); BOOKS.forEach(b => { const t = document.createElement('button'); t.textContent = b.icon + ' ' + b.title; t.classList.toggle('on', b.id === BID); t.onclick = () => { if (b.id !== BID) openBook(b.id); }; tabs.appendChild(t); });
+  const B = await fetch('books/' + BID + '/book.json?v=3').then(r => r.json());
   const N = B.n, book = $('#book');
   const paras = B.toc.flatMap(c => c.paras.map(p => ({ ...p, ch: c })));
   const paraOf = pg => { let best = paras[0]; for (const p of paras) if (p.pages[0] <= pg) best = p; return best; };
@@ -101,7 +132,7 @@ body.hide #top{transform:translateY(-70px);opacity:0}
   }
   function fill(pg) {
     const s = slides[pg - 1]; if (!s || s.dataset.done) return; s.dataset.done = 1; const page = s.firstChild;
-    const img = new Image(); img.alt = 'Страница ' + pg; img.decoding = 'async'; img.src = `pages/${String(pg).padStart(3, '0')}.jpg`; page.appendChild(img);
+    const img = new Image(); img.alt = 'Страница ' + pg; img.decoding = 'async'; img.src = `books/${BID}/pages/${String(pg).padStart(3, '0')}.jpg`; page.appendChild(img);
     const list = (byPage[pg] || []).sort((a, b) => a.y - b.y); let lastY = -1;
     list.forEach(a => {
       const m = document.createElement('div'); m.className = 'mark'; m.title = a.t; m.onclick = e => { e.stopPropagation(); openAnim(a.id); }; m.style.left = a.x0 * 100 + '%'; m.style.width = (a.x1 - a.x0) * 100 + '%'; m.style.top = (a.y - a.h / 2) * 100 + '%'; m.style.height = a.h * 100 + '%'; page.appendChild(m);
@@ -120,7 +151,7 @@ body.hide #top{transform:translateY(-70px);opacity:0}
     cur = pg; for (let k = pg - 1; k <= pg + 2; k++) fill(k);
     const p = paraOf(pg); $('#ttl').textContent = p.title; $('#pg').textContent = pg + ' / ' + N;
     const n = B.anchors.filter(a => a.par === p.key).length; $('#animb').style.visibility = n ? 'visible' : 'hidden';
-    try { localStorage.setItem('chem11.page', pg); } catch (e) {}
+    store.set('page.' + BID, pg);
   }
   function go(pg, smooth) { pg = Math.max(1, Math.min(N, pg)); fill(pg); book.scrollTo({ left: (pg - 1) * book.clientWidth, behavior: smooth ? 'smooth' : 'instant' }); setCur(pg); }
   if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
@@ -161,7 +192,7 @@ body.hide #top{transform:translateY(-70px);opacity:0}
 
   // окно анимации
   const player = $('#player'), frame = player.querySelector('iframe');
-  function openAnim(id) { frame.src = 'index.html?s=' + encodeURIComponent(id); player.classList.add('on'); if (tg && tg.BackButton) { tg.BackButton.show(); } history.pushState({ anim: id }, ''); }
+  function openAnim(id) { frame.src = 'index.html?b=' + BID + '&s=' + encodeURIComponent(id); player.classList.add('on'); if (tg && tg.BackButton) { tg.BackButton.show(); } history.pushState({ anim: id }, ''); }
   function closeAnim() { if (!player.classList.contains('on')) return; player.classList.remove('on'); frame.src = 'about:blank'; if (tg && tg.BackButton) tg.BackButton.hide(); }
   $('#close').onclick = () => history.back();
   addEventListener('popstate', closeAnim);
@@ -169,8 +200,8 @@ body.hide #top{transform:translateY(-70px);opacity:0}
 
   // старт: страница из адреса (#55), иначе последняя открытая, иначе оглавление
   let start = parseInt(location.hash.slice(1)) || 0;
-  if (!start) try { start = +localStorage.getItem('chem11.page') || 0; } catch (e) {}
-  go(start || paras.find(p => p.key === '1').pages[0]); setTimeout(() => go(cur), 60);
+  if (!start) start = +store.get('page.' + BID) || (BID === 'chem' ? +store.get('chem11.page') || 0 : 0);
+  go(start || (paras.find(p => p.key === '1') || paras[0]).pages[0]); setTimeout(() => go(cur), 60);
   if (!start) $('#tocb').click();
   setTimeout(() => $('#hint').classList.add('off'), 4500);
 })();

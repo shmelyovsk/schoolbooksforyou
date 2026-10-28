@@ -4,6 +4,12 @@ const CH = window.CH = {};
 const TAU = Math.PI * 2;
 CH.LINE = '#2b2823';
 CH.R = {};
+// число по-русски: запятая, разумное число знаков, большие/малые — в виде a·10ⁿ
+CH.num = (x, d) => {
+  if (!isFinite(x)) return '∞'; const a = Math.abs(x);
+  if (a !== 0 && (a >= 1e5 || a < 1e-3)) { const e = Math.floor(Math.log10(a)), m = x / 10 ** e; const sup = String(e).replace('-', '⁻').replace(/\d/g, k => '⁰¹²³⁴⁵⁶⁷⁸⁹'[k]); return m.toFixed(2).replace('.', ',') + '·10' + sup; }
+  const k = d != null ? d : a >= 100 ? 0 : a >= 10 ? 1 : 2; return x.toFixed(k).replace('.', ',');
+};
 CH.clamp = (x, a = 0, b = 1) => x < a ? a : x > b ? b : x;
 CH.lerp = (a, b, t) => a + (b - a) * t;
 CH.sm = (a, b, x) => { const t = CH.clamp((x - a) / (b - a)); return t * t * (3 - 2 * t); };
