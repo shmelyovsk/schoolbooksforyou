@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Химия 11 — анимации</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+  <section id="card" class="glass">
+    <button id="cardx" aria-label="Свернуть"><svg viewBox="0 0 24 24"><path d="M6 15l6-6 6 6"/></svg></button>
+    <div class="lab"></div>
+    <h2></h2>
+    <div class="eq"></div>
+    <p></p>
+    <div class="live"></div>
+    <div id="ctrl"></div>
+  </section>
+  <main id="stage"><canvas id="cv"></canvas></main>
+  <nav id="bar" class="glass">
+    <button id="prev" aria-label="Назад"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <button id="play" aria-label="Пауза"><svg viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg></button>
+    <button id="redo" aria-label="Сначала"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg></button>
+    <input id="seek" type="range" min="0" max="1000" value="0" aria-label="Ход анимации">
+    <button id="next" aria-label="Вперёд"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+    <button id="list" aria-label="Все анимации параграфа"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  </nav>
+  <aside id="menu" class="glass" hidden><ol></ol></aside>
+</div>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="js/util.js"></script>
+<script src="js/molecules.js"></script>
+<script src="js/macro.js"></script>
+<script src="js/micro.js"></script>
+<script src="js/custom.js"></script>
+<script src="js/custom2.js"></script>
+<script src="js/look.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
