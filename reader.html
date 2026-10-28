@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Химия 11 — учебник с анимациями</title>
+<style>
+:root{--ink:#23201c;--muted:#5a554d;--glass:rgba(255,255,255,.86);--accent:#5b3fd0;--hl:rgba(91,63,208,.12);--bg:#cfd8d0}
+:root.dark{--ink:#f1ede6;--muted:#bdb7ad;--glass:rgba(28,30,36,.88);--accent:#b3a6ff;--hl:rgba(179,166,255,.16);--bg:#1f242b}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);font-family:system-ui,"Segoe UI",Roboto,sans-serif;color:var(--ink);-webkit-tap-highlight-color:transparent}
+button{all:unset;box-sizing:border-box;cursor:pointer;display:grid;place-items:center}
+svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.glass{background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 8px 26px rgba(0,0,0,.16)}
+/* верхняя панель */
+#top{position:fixed;top:calc(8px + env(safe-area-inset-top));left:8px;right:8px;height:46px;border-radius:14px;display:flex;align-items:center;gap:4px;padding:0 4px;z-index:5;transition:transform .25s,opacity .25s}
+#top button{width:38px;height:38px;border-radius:10px;color:var(--ink)}
+#top button:hover{background:var(--hl)}
+#ttl{flex:1;min-width:0;font:600 14px/1.2 Georgia,serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#pg{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums;padding:0 4px}
+body.hide #top{transform:translateY(-70px);opacity:0}
+/* страницы */
+#book{position:fixed;inset:0;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;overscroll-behavior:contain}
+#book::-webkit-scrollbar{display:none}
+#book.lock{overflow:hidden}
+.slide{flex:0 0 100%;height:100%;scroll-snap-align:center;scroll-snap-stop:always;overflow-y:auto;overflow-x:hidden;display:flex;justify-content:center;padding:calc(62px + env(safe-area-inset-top)) 6px 24px}
+.slide.zoom{overflow:auto}
+.page{position:relative;width:min(100%,760px);flex:none;align-self:flex-start;background:#fff;box-shadow:0 4px 18px rgba(0,0,0,.18);border-radius:4px}
+.slide.zoom .page{width:200%;max-width:none}
+.page img{display:block;width:100%;height:100%;border-radius:4px}
+/* кнопки анимаций на странице */
+.mark{position:absolute;border-radius:3px;background:rgba(143,123,255,.24);cursor:pointer;box-shadow:inset 0 -2px 0 rgba(91,63,208,.55)}
+.anim{position:absolute;right:3px;transform:translateY(-50%);display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:15px;background:var(--accent);color:#fff;font:600 12px/1 system-ui;box-shadow:0 3px 10px rgba(91,63,208,.45);max-width:46%;animation:pop .5s both}
+.anim svg{width:15px;height:15px;flex:none;fill:#fff;stroke:none}
+@keyframes pop{from{transform:translateY(-50%) scale(.4);opacity:0}}
+.anim::after{content:"";position:absolute;inset:-4px;border-radius:19px;border:2px solid var(--accent);opacity:0;animation:ring 2.4s 1s infinite}
+@keyframes ring{0%{opacity:.7;transform:scale(.9)}70%,100%{opacity:0;transform:scale(1.25)}}
+/* боковые подсказки свайпа (для мыши) */
+.nav{position:fixed;top:50%;width:40px;height:64px;margin-top:-32px;border-radius:12px;z-index:4;color:var(--ink);opacity:.55}
+.nav:hover{opacity:1;background:var(--glass)}
+#prev{left:4px}#next{right:4px}
+@media (pointer:coarse){.nav{display:none}}
+/* выдвижные панели */
+.sheet{position:fixed;left:0;right:0;bottom:0;max-height:82vh;border-radius:18px 18px 0 0;z-index:8;overflow:auto;padding:8px 10px calc(16px + env(safe-area-inset-bottom));transform:translateY(105%);transition:transform .28s}
+.sheet.open{transform:none}
+.sheet h3{margin:8px 8px 6px;font:600 18px Georgia,serif}
+.sheet .grab{width:40px;height:4px;border-radius:2px;background:var(--muted);opacity:.4;margin:2px auto 6px}
+.sheet .ch{margin:12px 8px 4px;font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--accent);text-transform:uppercase}
+.sheet button.row{display:flex;justify-content:flex-start;gap:10px;width:100%;padding:10px 8px;border-radius:10px;font-size:14.5px;line-height:1.3;text-align:left}
+.sheet button.row:hover,.sheet button.row.on{background:var(--hl)}
+.sheet button.row em{font-style:normal;color:var(--muted);margin-left:auto;padding-left:8px;white-space:nowrap;font-size:12.5px}
+#shade{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:7;opacity:0;pointer-events:none;transition:opacity .25s}
+#shade.on{opacity:1;pointer-events:auto}
+/* окно анимации */
+#player{position:fixed;inset:0;z-index:10;background:var(--bg);display:none}
+#player.on{display:block;animation:up .3s both}
+@keyframes up{from{transform:translateY(30px);opacity:0}}
+#player iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+#close{position:absolute;right:12px;bottom:calc(74px + env(safe-area-inset-bottom));width:46px;height:46px;border-radius:23px;z-index:2;color:var(--ink)}
+#hint{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);padding:9px 14px;border-radius:12px;font-size:13px;z-index:6;transition:opacity .6s;white-space:nowrap}
+#hint.off{opacity:0;pointer-events:none}
+</style>
+</head>
+<body>
+<header id="top" class="glass">
+  <button id="tocb" aria-label="Оглавление"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg></button>
+  <div id="ttl">Химия · 11 класс</div>
+  <div id="pg"></div>
+  <button id="animb" aria-label="Анимации параграфа"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10 9.5v5l4.5-2.5z" fill="currentColor"/></svg></button>
+</header>
+<main id="book"></main>
+<button class="nav" id="prev" aria-label="Предыдущая страница"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+<button class="nav" id="next" aria-label="Следующая страница"><svg viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+<div id="hint" class="glass">Листайте свайпом ← →  ·  ▶ и подсвеченные слова — анимации</div>
+<div id="shade"></div>
+<section id="toc" class="sheet glass"><div class="grab"></div><h3>Оглавление</h3><div class="list"></div></section>
+<section id="anims" class="sheet glass"><div class="grab"></div><h3></h3><div class="list"></div></section>
+<div id="player"><iframe title="Анимация"></iframe><button id="close" class="glass" aria-label="Закрыть анимацию"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+'use strict';
+(async () => {
+  const $ = s => document.querySelector(s);
+  const tg = window.Telegram && Telegram.WebApp && Telegram.WebApp.initData !== undefined ? Telegram.WebApp : null;
+  if (tg) { try { tg.ready(); tg.expand(); tg.disableVerticalSwipes && tg.disableVerticalSwipes(); if (tg.colorScheme === 'dark') document.documentElement.classList.add('dark'); } catch (e) {} }
+  else if (matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
+
+  const B = await fetch('book.json').then(r => r.json());
+  const N = B.n, book = $('#book');
+  const paras = B.toc.flatMap(c => c.paras.map(p => ({ ...p, ch: c })));
+  const paraOf = pg => { let best = paras[0]; for (const p of paras) if (p.pages[0] <= pg) best = p; return best; };
+  const byPage = {}; B.anchors.forEach(a => { if (a.y != null) (byPage[a.page] = byPage[a.page] || []).push(a); });
+  const play = '<svg viewBox="0 0 24 24"><path d="M7 4.5v15l12.5-7.5z"/></svg>';
+
+  // страницы
+  const slides = [];
+  for (let pg = 1; pg <= N; pg++) {
+    const s = document.createElement('section'); s.className = 'slide'; s.dataset.pg = pg;
+    const page = document.createElement('div'); page.className = 'page'; page.style.aspectRatio = '1 / ' + (B.ratio[pg] || 1.39);
+    s.appendChild(page); book.appendChild(s); slides.push(s);
+  }
+  function fill(pg) {
+    const s = slides[pg - 1]; if (!s || s.dataset.done) return; s.dataset.done = 1; const page = s.firstChild;
+    const img = new Image(); img.alt = 'Страница ' + pg; img.decoding = 'async'; img.src = `pages/${String(pg).padStart(3, '0')}.jpg`; page.appendChild(img);
+    const list = (byPage[pg] || []).sort((a, b) => a.y - b.y); let lastY = -1;
+    list.forEach(a => {
+      const m = document.createElement('div'); m.className = 'mark'; m.title = a.t; m.onclick = e => { e.stopPropagation(); openAnim(a.id); }; m.style.left = a.x0 * 100 + '%'; m.style.width = (a.x1 - a.x0) * 100 + '%'; m.style.top = (a.y - a.h / 2) * 100 + '%'; m.style.height = a.h * 100 + '%'; page.appendChild(m);
+      let y = a.y; if (y - lastY < .032) y = lastY + .032; lastY = y;
+      const b = document.createElement('button'); b.className = 'anim'; b.style.top = y * 100 + '%'; b.innerHTML = play;
+      b.title = a.t; b.setAttribute('aria-label', 'Анимация: ' + a.t); b.onclick = e => { e.stopPropagation(); openAnim(a.id); };
+      page.appendChild(b);
+    });
+  }
+
+  // текущая страница
+  let cur = 1;
+  const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting && e.intersectionRatio > .6) setCur(+e.target.dataset.pg); }), { root: book, threshold: [.6] });
+  slides.forEach(s => io.observe(s));
+  function setCur(pg) {
+    cur = pg; for (let k = pg - 1; k <= pg + 2; k++) fill(k);
+    const p = paraOf(pg); $('#ttl').textContent = p.title; $('#pg').textContent = pg + ' / ' + N;
+    const n = B.anchors.filter(a => a.par === p.key).length; $('#animb').style.visibility = n ? 'visible' : 'hidden';
+    try { localStorage.setItem('chem11.page', pg); } catch (e) {}
+  }
+  function go(pg, smooth) { pg = Math.max(1, Math.min(N, pg)); fill(pg); book.scrollTo({ left: (pg - 1) * book.clientWidth, behavior: smooth ? 'smooth' : 'instant' }); setCur(pg); }
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  addEventListener('hashchange', () => { const h = parseInt(location.hash.slice(1)); if (h) go(h); });
+  addEventListener('resize', () => go(cur));
+  $('#prev').onclick = () => go(cur - 1, true); $('#next').onclick = () => go(cur + 1, true);
+  addEventListener('keydown', e => { if ($('#player').classList.contains('on')) { if (e.key === 'Escape') closeAnim(); return; } if (e.key === 'ArrowRight') go(cur + 1, true); if (e.key === 'ArrowLeft') go(cur - 1, true); });
+
+  // увеличение двойным касанием; одиночное — скрыть/показать панель
+  let lastTap = 0;
+  book.addEventListener('click', e => {
+    if (e.target.closest('.anim, .mark')) return; const s = e.target.closest('.slide'); if (!s) return;
+    const now = Date.now();
+    if (now - lastTap < 300) { const z = !s.classList.contains('zoom'); s.classList.toggle('zoom', z); book.classList.toggle('lock', z); if (z) { const r = s.getBoundingClientRect(); s.scrollLeft = (e.clientX - r.left); } lastTap = 0; clearTimeout(book._t); return; }
+    lastTap = now; book._t = setTimeout(() => document.body.classList.toggle('hide'), 300);
+  });
+
+  // оглавление
+  const sheet = (id, on) => { $('#' + id).classList.toggle('open', on); $('#shade').classList.toggle('on', on); };
+  const closeSheets = () => { sheet('toc', false); sheet('anims', false); };
+  $('#shade').onclick = closeSheets;
+  $('#tocb').onclick = () => {
+    const box = $('#toc .list'); box.innerHTML = ''; const cp = paraOf(cur);
+    B.toc.forEach(c => {
+      const h = document.createElement('div'); h.className = 'ch'; h.textContent = `Глава ${c.num}. ${c.title}`; box.appendChild(h);
+      c.paras.forEach(p => { const b = document.createElement('button'); b.className = 'row' + (p.key === cp.key ? ' on' : ''); b.textContent = p.title;
+        const n = B.anchors.filter(a => a.par === p.key).length; const em = document.createElement('em'); em.textContent = (n ? '🎬 ' + n + ' · ' : '') + 'с. ' + p.pages[0]; b.appendChild(em);
+        b.onclick = () => { closeSheets(); go(p.pages[0]); }; box.appendChild(b); });
+    });
+    sheet('toc', true); setTimeout(() => { const on = box.querySelector('.on'); on && on.scrollIntoView({ block: 'center' }); }, 50);
+  };
+  $('#animb').onclick = () => {
+    const p = paraOf(cur), box = $('#anims .list'); box.innerHTML = ''; $('#anims h3').textContent = '🎬 ' + p.title;
+    B.anchors.filter(a => a.par === p.key).forEach(a => { const b = document.createElement('button'); b.className = 'row'; b.textContent = a.t; const em = document.createElement('em'); em.textContent = a.y != null ? 'с. ' + a.page : ''; b.appendChild(em);
+      b.onclick = () => { closeSheets(); if (a.y != null) go(a.page); openAnim(a.id); }; box.appendChild(b); });
+    sheet('anims', true);
+  };
+
+  // окно анимации
+  const player = $('#player'), frame = player.querySelector('iframe');
+  function openAnim(id) { frame.src = 'index.html?s=' + encodeURIComponent(id); player.classList.add('on'); if (tg && tg.BackButton) { tg.BackButton.show(); } history.pushState({ anim: id }, ''); }
+  function closeAnim() { if (!player.classList.contains('on')) return; player.classList.remove('on'); frame.src = 'about:blank'; if (tg && tg.BackButton) tg.BackButton.hide(); }
+  $('#close').onclick = () => history.back();
+  addEventListener('popstate', closeAnim);
+  if (tg && tg.BackButton) tg.BackButton.onClick(() => history.back());
+
+  // старт: страница из адреса (#55), иначе последняя открытая, иначе оглавление
+  let start = parseInt(location.hash.slice(1)) || 0;
+  if (!start) try { start = +localStorage.getItem('chem11.page') || 0; } catch (e) {}
+  go(start || paras.find(p => p.key === '1').pages[0]); setTimeout(() => go(cur), 60);
+  if (!start) $('#tocb').click();
+  setTimeout(() => $('#hint').classList.add('off'), 4500);
+})();
+</script>
+</body>
+</html>
