@@ -9,6 +9,7 @@
   const cv = $('#cv'), ctx = cv.getContext('2d');
   const q = new URLSearchParams(location.search), BOOK = (q.get('b') || 'chem').replace(/[^a-z]/g, '');
   document.documentElement.dataset.book = BOOK;
+  document.title = ({ chem: 'Химия 11', phys: 'Физика 11', geom: 'Геометрия 10–11' }[BOOK] || 'Учебник') + ' — анимации';
   let scenes = [], group = [], cur = null, idx = 0, time = 0, playing = true, st = null, microCache = {}, last = performance.now(), dim = { W: 960, H: 600, s: 1, ox: 0, oy: 0, dpr: 1 };
   const HOLD = 2.5;
 
@@ -25,7 +26,8 @@
   function setCtrl() {
     const box = $('#ctrl'); box.innerHTML = ''; const R = CH.R[cur.type];
     // физика: переключатели режимов и ползунки величин из описания сцены
-    if (R && R.modes) R.modes.forEach(m => { const g = document.createElement('div'); g.className = 'seg';
+    const MODES = R && (typeof R.modes === 'function' ? R.modes(cur) : R.modes);
+    if (MODES) MODES.forEach(m => { const g = document.createElement('div'); g.className = 'seg';
       m.o.forEach(([val, label]) => { const b = document.createElement('button'); b.textContent = label; b.classList.toggle('on', st.v[m.k] === val);
         b.onclick = () => { st.v[m.k] = val; g.querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); }; g.appendChild(b); }); box.appendChild(g); });
     if (R && R.params) R.params.forEach(pr => { if (cur.hide && cur.hide.includes(pr.k)) return;
@@ -41,10 +43,10 @@
   function load(i, instant) {
     idx = Math.max(0, Math.min(group.length - 1, i)); cur = group[idx]; time = 0; microCache = {};
     const R = CH.R[cur.type]; st = R && R.init ? R.init(cur) : {}; playing = true; setPlay();
-    if (R && (R.params || R.modes)) { st.v = {}; (R.params || []).forEach(p => st.v[p.k] = p.v); (R.modes || []).forEach(m => st.v[m.k] = m.o[0][0]); Object.assign(st.v, cur.v || {}); }
+    if (R && (R.params || R.modes)) { st.v = {}; (R.params || []).forEach(p => st.v[p.k] = p.v); ((typeof R.modes === 'function' ? R.modes(cur) : R.modes) || []).forEach(m => st.v[m.k] = m.o[0][0]); Object.assign(st.v, cur.v || {}); }
     st.clock = 0;
     $('#card .lab').textContent = (cur.tag || 'Анимация') + ' · ' + (/^\d+$/.test(cur.par) ? '§' + cur.par : cur.par || '');
-    $('#card h2').textContent = cur.t; $('#card .eq').textContent = /[→⇌]/.test(cur.t) ? '' : fmt(cur.eq); $('#card p').textContent = cur.d;
+    $('#card h2').textContent = BOOK === 'geom' ? CH.uni(cur.t) : cur.t; $('#card .eq').textContent = /[→⇌]/.test(cur.t) ? '' : fmt(cur.eq); $('#card p').textContent = cur.d;
     $('#bar').classList.toggle('nosk', !!(R && (R.stateful || R.phys))); setCtrl(); resize();
     document.querySelectorAll('#menu button').forEach((b, k) => b.classList.toggle('on', k === idx));
     history.replaceState(null, '', '?b=' + BOOK + '&s=' + cur.id);
@@ -95,9 +97,15 @@
   $('#seek').oninput = e => { time = (e.target.value / 1000) * (cur.dur || 10); playing = false; setPlay(); };
   $('#cardx').onclick = () => $('#card').classList.toggle('min');
   cv.onclick = () => { $('#menu').hidden = true; };
+  // вращение чертежа пальцем/мышью (сцены с R.drag)
+  let drag = null;
+  cv.addEventListener('pointerdown', e => { const R = cur && CH.R[cur.type]; if (!R || !R.drag) return; drag = { x: e.clientX, y: e.clientY }; cv.setPointerCapture(e.pointerId); });
+  cv.addEventListener('pointermove', e => { if (!drag) return; const R = CH.R[cur.type]; R.onDrag(st, e.clientX - drag.x, e.clientY - drag.y); drag = { x: e.clientX, y: e.clientY }; });
+  const endDrag = () => { drag = null; }; cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+  cv.addEventListener('dblclick', () => { const R = cur && CH.R[cur.type]; if (R && R.drag && R.init) { const v = st.v; st = R.init(cur); st.v = v; st.clock = 0; } });
   addEventListener('keydown', e => { if (e.key === 'ArrowRight') load(idx + 1); if (e.key === 'ArrowLeft') load(idx - 1); if (e.key === ' ') $('#play').click(); });
 
-  fetch('books/' + BOOK + '/scenes.json?v=3').then(r => r.json()).then(all => {
+  fetch('books/' + BOOK + '/scenes.json?v=5').then(r => r.json()).then(all => {
     scenes = all; const id = q.get('s'), par = q.get('p'); const s0 = scenes.find(x => x.id === id);
     const pk = s0 ? s0.par : par; group = pk ? scenes.filter(x => x.par === pk) : scenes; if (!group.length) group = scenes;
     buildMenu(); load(s0 ? group.indexOf(s0) : 0); resize(); if (!s0) $('#menu').hidden = false; requestAnimationFrame(frame);

@@ -7,6 +7,8 @@
 <style>
 :root{--ink:#23201c;--muted:#5a554d;--glass:rgba(255,255,255,.86);--accent:#5b3fd0;--hl:rgba(91,63,208,.12);--bg:#cfd8d0}
 :root[data-book=phys]{--accent:#1f6fd1;--hl:rgba(31,111,209,.12);--bg:#d2dbe3}
+:root[data-book=geom]{--accent:#1e8f6e;--hl:rgba(30,143,110,.13);--bg:#d3ddd6}
+:root.dark[data-book=geom]{--accent:#6fd3b0;--bg:#1b2420}
 :root.dark[data-book=phys]{--accent:#7fb2ff;--bg:#1c232c}
 :root.dark{--ink:#f1ede6;--muted:#bdb7ad;--glass:rgba(28,30,36,.88);--accent:#b3a6ff;--hl:rgba(179,166,255,.16);--bg:#1f242b}
 *{box-sizing:border-box}
@@ -103,7 +105,7 @@ body.hide #top{transform:translateY(-70px);opacity:0}
   else if (matchMedia('(prefers-color-scheme: dark)').matches) document.documentElement.classList.add('dark');
 
   // учебники: страницы и данные лежат в books/<id>/
-  const BOOKS = [{ id: 'chem', icon: '🧪', title: 'Химия', sub: '11 класс · О. С. Габриелян и др.', cover: 1 }, { id: 'phys', icon: '🧲', title: 'Физика', sub: '11 класс · Г. Я. Мякишев и др.', cover: 1 }];
+  const BOOKS = [{ id: 'chem', icon: '🧪', title: 'Химия', sub: '11 класс · О. С. Габриелян и др.', cover: 1 }, { id: 'phys', icon: '🧲', title: 'Физика', sub: '11 класс · Г. Я. Мякишев и др.', cover: 1 }, { id: 'geom', icon: '📐', title: 'Геометрия', sub: '10–11 класс · Л. С. Атанасян и др.', cover: 1 }];
   const store = { get: k => { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} } };
   const qs = new URLSearchParams(location.search);
   let BID = (qs.get('b') || '').replace(/[^a-z]/g, '');
@@ -116,7 +118,7 @@ body.hide #top{transform:translateY(-70px);opacity:0}
   const BK = BOOKS.find(b => b.id === BID); document.documentElement.dataset.book = BID; $('#bookb').textContent = BK.icon; document.title = BK.title + ' 11 — учебник с анимациями';
   store.set('lib.book', BID);
   const tabs = $('#toc .tabs'); BOOKS.forEach(b => { const t = document.createElement('button'); t.textContent = b.icon + ' ' + b.title; t.classList.toggle('on', b.id === BID); t.onclick = () => { if (b.id !== BID) openBook(b.id); }; tabs.appendChild(t); });
-  const B = await fetch('books/' + BID + '/book.json?v=3').then(r => r.json());
+  const B = await fetch('books/' + BID + '/book.json?v=5').then(r => r.json());
   const N = B.n, book = $('#book');
   const paras = B.toc.flatMap(c => c.paras.map(p => ({ ...p, ch: c })));
   const paraOf = pg => { let best = paras[0]; for (const p of paras) if (p.pages[0] <= pg) best = p; return best; };
