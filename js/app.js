@@ -46,7 +46,10 @@
     if (R && (R.params || R.modes)) { st.v = {}; (R.params || []).forEach(p => st.v[p.k] = p.v); ((typeof R.modes === 'function' ? R.modes(cur) : R.modes) || []).forEach(m => st.v[m.k] = m.o[0][0]); Object.assign(st.v, cur.v || {}); }
     st.clock = 0;
     $('#card .lab').textContent = (cur.tag || 'Анимация') + ' · ' + (/^\d+$/.test(cur.par) ? '§' + cur.par : cur.par || '');
-    $('#card h2').textContent = BOOK === 'geom' ? CH.uni(cur.t) : cur.t; $('#card .eq').textContent = /[→⇌]/.test(cur.t) ? '' : fmt(cur.eq); $('#card p').textContent = cur.d;
+    $('#card h2').textContent = BOOK === 'geom' ? CH.uni(cur.t) : cur.t; $('#card .eq').textContent = /[→⇌]/.test(cur.t) ? '' : fmt(cur.eq); $('#card p').textContent = cur.task ? CH.uni(cur.task) : cur.d;
+    $('#card p').classList.toggle('task', !!cur.task);
+    // геометрия на телефоне: карточка свёрнута, по нажатию раскрывается условие задачи
+    if (cur.task && !load.done) { load.done = true; if (matchMedia('(max-aspect-ratio: 11/10), (max-width: 759px)').matches) $('#card').classList.add('min'); }
     $('#bar').classList.toggle('nosk', !!(R && (R.stateful || R.phys))); setCtrl(); resize();
     document.querySelectorAll('#menu button').forEach((b, k) => b.classList.toggle('on', k === idx));
     history.replaceState(null, '', '?b=' + BOOK + '&s=' + cur.id);
@@ -96,6 +99,7 @@
   $('#list').onclick = () => { $('#menu').hidden = !$('#menu').hidden; };
   $('#seek').oninput = e => { time = (e.target.value / 1000) * (cur.dur || 10); playing = false; setPlay(); };
   $('#cardx').onclick = () => $('#card').classList.toggle('min');
+  $('#card h2').onclick = () => { if ($('#card').classList.contains('min')) $('#card').classList.remove('min'); };
   cv.onclick = () => { $('#menu').hidden = true; };
   // вращение чертежа пальцем/мышью (сцены с R.drag)
   let drag = null;
@@ -105,7 +109,7 @@
   cv.addEventListener('dblclick', () => { const R = cur && CH.R[cur.type]; if (R && R.drag && R.init) { const v = st.v; st = R.init(cur); st.v = v; st.clock = 0; } });
   addEventListener('keydown', e => { if (e.key === 'ArrowRight') load(idx + 1); if (e.key === 'ArrowLeft') load(idx - 1); if (e.key === ' ') $('#play').click(); });
 
-  fetch('books/' + BOOK + '/scenes.json?v=5').then(r => r.json()).then(all => {
+  fetch('books/' + BOOK + '/scenes.json?v=7').then(r => r.json()).then(all => {
     scenes = all; const id = q.get('s'), par = q.get('p'); const s0 = scenes.find(x => x.id === id);
     const pk = s0 ? s0.par : par; group = pk ? scenes.filter(x => x.par === pk) : scenes; if (!group.length) group = scenes;
     buildMenu(); load(s0 ? group.indexOf(s0) : 0); resize(); if (!s0) $('#menu').hidden = false; requestAnimationFrame(frame);

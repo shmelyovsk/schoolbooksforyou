@@ -20,6 +20,9 @@ svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-l
 #card .eq{font:600 16px/1.35 Georgia,"Times New Roman",serif;color:var(--accent);margin:2px 0 6px;overflow-wrap:anywhere}
 #card .eq:empty{display:none}
 #card p{margin:0;font-size:14px;line-height:1.42}
+#card p.task{font-size:15px;line-height:1.5;padding:8px 10px;margin:6px 0 2px;border-radius:10px;background:var(--hl)}
+#card p.task::before{content:'Условие задачи';display:block;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin-bottom:4px}
+#card.min h2{cursor:pointer}
 #card .live{margin-top:8px;font-size:13px;white-space:pre-line;line-height:1.4;color:var(--muted);font-variant-numeric:tabular-nums}
 #card .live:empty{display:none}
 #card.min p,#card.min .live,#card.min .eq{display:none}
@@ -52,4 +55,9 @@ svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-l
   #bar{grid-column:1/3;grid-row:3}
   #card.min p,#card.min .live,#card.min #ctrl,#card.min .eq{display:block}
   #cardx{display:none}
+  /* геометрия: чертёж слева, условие задачи справа */
+  :root[data-book=geom] #app{grid-template-columns:1fr min(430px,38vw)}
+  :root[data-book=geom] #card{grid-column:2;margin:10px 10px 0 0;max-height:70vh}
+  :root[data-book=geom] #ctrl{grid-column:2;margin:8px 10px 0 0}
+  :root[data-book=geom] #stage{grid-column:1}
 }

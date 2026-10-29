@@ -118,7 +118,7 @@ body.hide #top{transform:translateY(-70px);opacity:0}
   const BK = BOOKS.find(b => b.id === BID); document.documentElement.dataset.book = BID; $('#bookb').textContent = BK.icon; document.title = BK.title + ' 11 — учебник с анимациями';
   store.set('lib.book', BID);
   const tabs = $('#toc .tabs'); BOOKS.forEach(b => { const t = document.createElement('button'); t.textContent = b.icon + ' ' + b.title; t.classList.toggle('on', b.id === BID); t.onclick = () => { if (b.id !== BID) openBook(b.id); }; tabs.appendChild(t); });
-  const B = await fetch('books/' + BID + '/book.json?v=5').then(r => r.json());
+  const B = await fetch('books/' + BID + '/book.json?v=7').then(r => r.json());
   const N = B.n, book = $('#book');
   const paras = B.toc.flatMap(c => c.paras.map(p => ({ ...p, ch: c })));
   const paraOf = pg => { let best = paras[0]; for (const p of paras) if (p.pages[0] <= pg) best = p; return best; };
